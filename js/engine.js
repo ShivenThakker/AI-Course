@@ -104,6 +104,12 @@ const Engine = {
       setTimeout(() => {
         window.AIQuest.completeChallenge(challenge.id, stars, xpEarned);
       }, 1500);
+    } else {
+      // Show retry button
+      submitBtn.disabled = false;
+      submitBtn.textContent = '🔄 Try Again';
+      submitBtn.className = 'btn btn-secondary btn-lg';
+      submitBtn.onclick = () => window.AIQuest.retryChallenge();
     }
   },
 
