@@ -157,9 +157,12 @@ const Engine = {
     detailsDiv.innerHTML = '';
     Object.values(result.details).forEach(detail => {
       detailsDiv.innerHTML += `
-        <div class="analysis-detail">
-          <span class="label">${detail.label}</span>
-          <span class="value ${detail.flag ? 'flag' : 'ok'}">${detail.value}</span>
+        <div class="analysis-detail" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+          <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <span class="label">${detail.label}</span>
+            <span class="value ${detail.flag ? 'flag' : 'ok'}">${detail.value}</span>
+          </div>
+          <span style="font-size: 0.75rem; color: ${detail.flag ? 'var(--accent-orange)' : 'var(--text-muted)'}; line-height: 1.4;">${detail.explanation}</span>
         </div>
       `;
     });
