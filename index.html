@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI Quest — An interactive AI learning platform with gamified challenges to master AI tools and concepts.">
+  <title>AI Quest — Master the AI Toolkit</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+</head>
+<body>
+
+  <!-- Floating Particles (decorative background) -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Main App -->
+  <div id="app">
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+      <a class="navbar-brand" href="#" onclick="window.AIQuest.navigate('home')">
+        <span class="navbar-logo">🚀</span>
+        <span class="navbar-title">AI Quest</span>
+      </a>
+
+      <div class="xp-bar-container">
+        <div class="xp-bar-labels">
+          <span id="rank-label">AI Novice</span>
+          <span id="xp-label">0 / 300 XP</span>
+        </div>
+        <div class="xp-bar-track">
+          <div class="xp-bar-fill" id="xp-bar-fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="navbar-stats">
+        <div class="stat-badge">
+          <span class="stat-icon">⭐</span>
+          <span class="stat-value" id="total-stars">0</span>
+        </div>
+        <div class="stat-badge">
+          <span class="stat-icon">⚡</span>
+          <span class="stat-value" id="total-xp">0 XP</span>
+        </div>
+        <div class="stat-badge rank-badge" id="rank-badge">
+          <span class="stat-icon">🎖️</span>
+          <span class="stat-value" id="rank-title">AI Novice</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- View: Home (Level Map) -->
+    <div class="view active" id="view-home">
+      <div class="level-map-header">
+        <h1>Your AI Journey</h1>
+        <p>Master AI tools and concepts through hands-on challenges. Complete each level to unlock the next.</p>
+      </div>
+      <div class="level-map-grid" id="level-map-grid">
+        <!-- Level cards rendered by JS -->
+      </div>
+    </div>
+
+    <!-- View: Level Detail (Challenge List) -->
+    <div class="view" id="view-level">
+      <!-- Rendered by JS -->
+    </div>
+
+    <!-- View: Challenge -->
+    <div class="view" id="view-challenge">
+      <!-- Rendered by JS -->
+    </div>
+
+    <!-- Result Overlay -->
+    <div class="result-overlay" id="result-overlay">
+      <div class="result-card">
+        <div class="result-stars" id="result-stars"></div>
+        <h2 class="result-title" id="result-title">Challenge Complete!</h2>
+        <p class="result-subtitle" id="result-subtitle">Great work!</p>
+        <div class="result-xp" id="result-xp">
+          <span>⚡</span>
+          <span id="result-xp-value">+100 XP</span>
+        </div>
+        <div class="result-actions">
+          <button class="btn btn-secondary" id="result-retry" onclick="window.AIQuest.retryChallenge()">Try Again</button>
+          <button class="btn btn-primary" id="result-next" onclick="window.AIQuest.nextChallenge()">Next Challenge →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts (ES Modules) -->
+  <script src="js/analyzer.js"></script>
+  <script src="js/effects.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
