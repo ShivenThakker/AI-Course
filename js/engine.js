@@ -167,11 +167,24 @@ const Engine = {
       `;
     });
 
-    // Enable submit button
+    // Enable submit button with feedback
     const challenge = window.AIQuest.currentChallenge;
     const submitBtn = document.getElementById('essay-submit-btn');
     const words = text.split(/\s+/).filter(w => w.length > 0);
-    submitBtn.disabled = !(result.score <= challenge.maxAiScore && words.length >= challenge.minWords);
+    const scoreOk = result.score <= challenge.maxAiScore;
+    const wordsOk = words.length >= challenge.minWords;
+    submitBtn.disabled = !(scoreOk && wordsOk);
+
+    if (scoreOk && wordsOk) {
+      submitBtn.textContent = '✓ Submit — You Passed!';
+      submitBtn.className = 'btn btn-success btn-lg';
+    } else if (!wordsOk) {
+      submitBtn.textContent = `Need ${challenge.minWords - words.length} more words`;
+      submitBtn.className = 'btn btn-primary btn-lg';
+    } else {
+      submitBtn.textContent = `Score ${result.score}% — Need ≤${challenge.maxAiScore}%`;
+      submitBtn.className = 'btn btn-primary btn-lg';
+    }
 
     // Scroll to results
     resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
