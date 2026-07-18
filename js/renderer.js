@@ -380,7 +380,8 @@ const Renderer = {
     let html = `
       <div class="glass-card">
         <h2>🔗 Match the Pairs</h2>
-        <p style="color: var(--text-secondary); margin-bottom: var(--space-lg);">${challenge.instructions}</p>
+        <p style="color: var(--text-secondary); margin-bottom: var(--space-sm);">${challenge.instructions}</p>
+        <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: var(--space-lg);">💡 Click a scenario on the left, then click the tool you think matches it on the right.</p>
         <div class="matching-container">
           <div class="matching-column">
             <h4>Scenario</h4>
