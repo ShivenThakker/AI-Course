@@ -24,6 +24,7 @@ const Engine = {
     this._matchedPairs = new Set();
     this._rubricChecked = new Set();
     this._lastAnalysis = null;
+    this._promptTasksSubmitted = new Set();
   },
 
   // =============================================
@@ -324,32 +325,171 @@ const Engine = {
   // =============================================
   // PROMPT CHALLENGE ENGINE
   // =============================================
-  submitPromptChallenge() {
+  _promptTasksSubmitted: new Set(),
+
+  submitSinglePromptTask(taskIndex) {
     const challenge = window.AIQuest.currentChallenge;
-    let completedTasks = 0;
+    const task = challenge.tasks[taskIndex];
+    const promptInput = document.getElementById(`prompt-input-${taskIndex}`);
+    const outputInput = document.getElementById(`prompt-output-${taskIndex}`);
+    const feedbackDiv = document.getElementById(`prompt-feedback-${taskIndex}`);
+    const submitBtn = document.getElementById(`prompt-submit-${taskIndex}`);
+    const statusSpan = document.getElementById(`prompt-task-status-${taskIndex}`);
 
-    challenge.tasks.forEach((task, i) => {
-      const promptInput = document.getElementById(`prompt-input-${i}`);
-      const outputInput = document.getElementById(`prompt-output-${i}`);
+    const prompt = promptInput ? promptInput.value.trim() : '';
+    const output = outputInput ? outputInput.value.trim() : '';
 
-      const prompt = promptInput ? promptInput.value.trim() : '';
-      const output = outputInput ? outputInput.value.trim() : '';
-
-      // Check if both fields have meaningful content
-      if (prompt.length > 20 && output.length > 20) {
-        completedTasks++;
-      }
-    });
-
-    if (completedTasks === 0) {
-      alert('Please complete at least one task — write your improved prompt AND paste the AI\'s response.');
+    // Validation
+    if (prompt.length < 20) {
+      feedbackDiv.style.display = 'block';
+      feedbackDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+      feedbackDiv.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+      feedbackDiv.innerHTML = '<strong style="color: var(--accent-red);">❌ Prompt too short.</strong><br><span style="color: var(--text-secondary);">Write a detailed, improved prompt (at least a few sentences). Remember the formula: Role + Task + Context + Format + Constraints.</span>';
+      return;
+    }
+    if (output.length < 20) {
+      feedbackDiv.style.display = 'block';
+      feedbackDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+      feedbackDiv.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+      feedbackDiv.innerHTML = '<strong style="color: var(--accent-red);">❌ AI output missing.</strong><br><span style="color: var(--text-secondary);">Open ChatGPT or Claude, use your prompt, and paste the AI\'s response here so we can see if your prompt worked.</span>';
       return;
     }
 
+    // Check which required elements are present in the prompt
+    const promptLower = prompt.toLowerCase();
+    const outputLower = output.toLowerCase();
+    const combinedLower = promptLower + ' ' + outputLower;
+    let feedbackItems = [];
+    let passedCount = 0;
+
+    task.requiredElements.forEach((el, j) => {
+      const chip = document.getElementById(`constraint-${taskIndex}-${j}`);
+      const elLower = el.toLowerCase();
+
+      // Heuristic: check if the concept is addressed in the prompt
+      // We check for keywords related to each required element
+      const keywordMap = {
+        'role': ['you are', 'act as', 'pretend', 'persona', 'tutor', 'teacher', 'coach', 'expert', 'assistant'],
+        'specific topic': ['about', 'topic', 'explain', 'describe', 'regarding', 'focus on', 'specifically'],
+        'format': ['bullet', 'list', 'table', 'step', 'paragraph', 'numbered', 'format', 'structure', 'points'],
+        'audience level': ['grade', 'year old', 'student', 'beginner', 'simple', 'easy to understand', 'level', 'like i\'m', 'age'],
+        'genre/theme': ['sci-fi', 'fantasy', 'mystery', 'romance', 'horror', 'comedy', 'adventure', 'genre', 'theme', 'setting'],
+        'character details': ['character', 'protagonist', 'main character', 'personality', 'age', 'name', 'who is'],
+        'length constraint': ['word', 'sentence', 'paragraph', 'short', 'brief', 'limit', 'under', 'maximum', 'no more than'],
+        'style/tone': ['tone', 'style', 'casual', 'formal', 'funny', 'serious', 'professional', 'friendly', 'engaging', 'dark', 'humorous'],
+        'audience': ['for a', 'audience', 'reader', 'aimed at', 'written for', 'grade', 'student'],
+        'specific aspect': ['cause', 'effect', 'solution', 'impact', 'history', 'future', 'process', 'reason', 'how', 'why'],
+        'constraints': ['limit', 'maximum', 'under', 'avoid', 'must', 'should', 'include', 'without', 'only', 'exactly'],
+        'subjects': ['math', 'science', 'english', 'history', 'biology', 'physics', 'chemistry', 'subject', 'class'],
+        'time frame': ['hour', 'day', 'week', 'month', 'minute', 'session', 'before', 'until', 'deadline', 'schedule', 'plan'],
+        'study style': ['visual', 'flashcard', 'practice', 'quiz', 'summary', 'note', 'diagram', 'mind map', 'active recall'],
+      };
+
+      // Find relevant keywords for this element
+      let found = false;
+      const matchKeys = Object.keys(keywordMap).filter(k => elLower.includes(k));
+
+      if (matchKeys.length > 0) {
+        for (const key of matchKeys) {
+          if (keywordMap[key].some(kw => promptLower.includes(kw))) {
+            found = true;
+            break;
+          }
+        }
+      } else {
+        // Fallback: check if the element text itself or parts of it appear in the prompt
+        const elWords = elLower.split(/\s+/);
+        found = elWords.some(w => w.length > 3 && promptLower.includes(w));
+      }
+
+      if (found) {
+        passedCount++;
+        if (chip) {
+          chip.style.background = 'rgba(16, 185, 129, 0.2)';
+          chip.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+          chip.querySelector('.status-dot').style.background = 'var(--accent-green)';
+        }
+        feedbackItems.push(`<span style="color: var(--accent-green);">✅ <strong>${el}</strong> — Found in your prompt. Nice!</span>`);
+      } else {
+        if (chip) {
+          chip.style.background = 'rgba(239, 68, 68, 0.2)';
+          chip.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+          chip.querySelector('.status-dot').style.background = 'var(--accent-red)';
+        }
+        // Give specific advice for what's missing
+        let advice = 'Try adding this to your prompt.';
+        if (elLower.includes('role')) advice = 'Start your prompt with "You are a [role]..." to give the AI a persona.';
+        else if (elLower.includes('format')) advice = 'Tell the AI HOW to structure the answer: "Give me 5 bullet points" or "Format as a table."';
+        else if (elLower.includes('audience') || elLower.includes('level')) advice = 'Tell the AI who this is for: "Explain to a 9th grader" or "for someone who knows nothing about this."';
+        else if (elLower.includes('topic')) advice = 'Be more specific about WHAT exactly you want help with — don\'t leave it vague.';
+        else if (elLower.includes('tone') || elLower.includes('style')) advice = 'Specify the vibe: "in a friendly tone," "formally," "like a coach motivating an athlete."';
+        else if (elLower.includes('length') || elLower.includes('constraint')) advice = 'Set limits: "in under 200 words," "exactly 3 paragraphs," "keep each point to one sentence."';
+        else if (elLower.includes('genre') || elLower.includes('theme')) advice = 'Name the genre or theme: "a sci-fi story," "mystery thriller," etc.';
+        else if (elLower.includes('character')) advice = 'Describe your character: age, personality, situation, appearance — the more detail, the better.';
+        feedbackItems.push(`<span style="color: var(--accent-red);">❌ <strong>${el}</strong> — Missing. ${advice}</span>`);
+      }
+    });
+
+    const allPassed = passedCount === task.requiredElements.length;
+    const mostPassed = passedCount >= Math.ceil(task.requiredElements.length * 0.5);
+
+    // Show feedback
+    feedbackDiv.style.display = 'block';
+    if (allPassed) {
+      feedbackDiv.style.background = 'rgba(16, 185, 129, 0.1)';
+      feedbackDiv.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+      feedbackDiv.innerHTML = `<strong style="color: var(--accent-green);">✅ Great prompt!</strong> All required elements are present.<br><br>${feedbackItems.join('<br>')}`;
+      this._promptTasksSubmitted.add(taskIndex);
+      statusSpan.textContent = '✅';
+      submitBtn.textContent = '✓ Submitted';
+      submitBtn.className = 'btn btn-success';
+      submitBtn.disabled = true;
+    } else if (mostPassed) {
+      feedbackDiv.style.background = 'rgba(245, 158, 11, 0.1)';
+      feedbackDiv.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+      feedbackDiv.innerHTML = `<strong style="color: var(--accent-orange);">🟡 Good effort — ${passedCount}/${task.requiredElements.length} elements found.</strong> You can improve and resubmit, or accept it as-is.<br><br>${feedbackItems.join('<br>')}<br><br><button class="btn btn-secondary" style="margin-top: var(--space-sm);" onclick="Engine.acceptPromptTask(${taskIndex})">Accept anyway</button>`;
+    } else {
+      feedbackDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+      feedbackDiv.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+      feedbackDiv.innerHTML = `<strong style="color: var(--accent-red);">❌ Needs work — only ${passedCount}/${task.requiredElements.length} elements found.</strong> Read the feedback below, improve your prompt, and try again.<br><br>${feedbackItems.join('<br>')}`;
+    }
+
+    // Update progress
+    this._updatePromptProgress();
+  },
+
+  acceptPromptTask(taskIndex) {
+    const statusSpan = document.getElementById(`prompt-task-status-${taskIndex}`);
+    const submitBtn = document.getElementById(`prompt-submit-${taskIndex}`);
+    this._promptTasksSubmitted.add(taskIndex);
+    statusSpan.textContent = '✅';
+    submitBtn.textContent = '✓ Submitted';
+    submitBtn.className = 'btn btn-success';
+    submitBtn.disabled = true;
+    this._updatePromptProgress();
+  },
+
+  _updatePromptProgress() {
+    const challenge = window.AIQuest.currentChallenge;
+    const count = this._promptTasksSubmitted.size;
+    const total = challenge.tasks.length;
+    document.getElementById('prompt-progress').textContent = `${count}/${total} tasks submitted`;
+    document.getElementById('prompt-complete-btn').disabled = count < challenge.scoring.oneStar;
+
+    if (count >= challenge.scoring.oneStar) {
+      const btn = document.getElementById('prompt-complete-btn');
+      btn.className = 'btn btn-success btn-lg';
+    }
+  },
+
+  completePromptChallenge() {
+    const challenge = window.AIQuest.currentChallenge;
+    const count = this._promptTasksSubmitted.size;
+
     let stars = 0;
-    if (completedTasks >= challenge.scoring.threeStars) stars = 3;
-    else if (completedTasks >= challenge.scoring.twoStars) stars = 2;
-    else if (completedTasks >= challenge.scoring.oneStar) stars = 1;
+    if (count >= challenge.scoring.threeStars) stars = 3;
+    else if (count >= challenge.scoring.twoStars) stars = 2;
+    else if (count >= challenge.scoring.oneStar) stars = 1;
 
     const xpEarned = Math.round(challenge.xp * (0.5 + stars * 0.25));
     window.AIQuest.completeChallenge(challenge.id, stars, xpEarned);

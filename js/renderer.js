@@ -420,13 +420,14 @@ const Renderer = {
       <div class="glass-card">
         <h2>🎯 Instructions</h2>
         <p style="color: var(--text-secondary); line-height: 1.7;">${challenge.instructions}</p>
+        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: var(--space-sm);">💡 Submit each task individually. You need ${challenge.scoring.oneStar}+ tasks to pass, ${challenge.scoring.threeStars} for 3 stars.</p>
       </div>
     `;
 
     challenge.tasks.forEach((task, i) => {
       html += `
         <div class="glass-card" id="prompt-task-${i}">
-          <h2>Task ${i + 1}</h2>
+          <h2>Task ${i + 1} <span id="prompt-task-status-${i}" style="font-size: 0.8rem;"></span></h2>
           ${task.badPrompt ? `
             <div class="example-box bad" style="margin-bottom: var(--space-md);">
               <div class="example-label">❌ Bad Prompt</div>
@@ -439,8 +440,8 @@ const Renderer = {
           <div style="margin: var(--space-md) 0;">
             <strong style="color: var(--text-bright); font-size: 0.85rem;">Must include:</strong>
             <div class="constraint-list" id="constraints-${i}">
-              ${task.requiredElements.map(el => `
-                <span class="constraint-chip">
+              ${task.requiredElements.map((el, j) => `
+                <span class="constraint-chip" id="constraint-${i}-${j}">
                   <span class="status-dot"></span>
                   ${el}
                 </span>
@@ -451,6 +452,12 @@ const Renderer = {
             style="min-height: 120px; margin-top: var(--space-md);"></textarea>
           <textarea class="text-input-area" id="prompt-output-${i}" placeholder="Paste the AI's response here..."
             style="min-height: 150px; margin-top: var(--space-sm);"></textarea>
+
+          <div style="display: flex; justify-content: flex-end; margin-top: var(--space-md);">
+            <button class="btn btn-primary" id="prompt-submit-${i}" onclick="Engine.submitSinglePromptTask(${i})">Submit Task ${i + 1}</button>
+          </div>
+
+          <div class="prompt-task-feedback" id="prompt-feedback-${i}" style="display: none; margin-top: var(--space-md); padding: var(--space-md); border-radius: var(--radius-lg); line-height: 1.7;"></div>
 
           ${task.hints ? `
             <div class="hints-container">
@@ -468,9 +475,11 @@ const Renderer = {
 
     html += `
       <div class="action-bar">
-        <div class="action-bar-left"></div>
+        <div class="action-bar-left">
+          <span id="prompt-progress" style="color: var(--text-muted); font-size: 0.85rem;">0/${challenge.tasks.length} tasks submitted</span>
+        </div>
         <div class="action-bar-right">
-          <button class="btn btn-primary btn-lg" onclick="Engine.submitPromptChallenge()">Submit All</button>
+          <button class="btn btn-primary btn-lg" id="prompt-complete-btn" onclick="Engine.completePromptChallenge()" disabled>Complete Challenge</button>
         </div>
       </div>`;
 

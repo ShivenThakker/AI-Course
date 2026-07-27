@@ -79,6 +79,7 @@
     <!-- Result Overlay -->
     <div class="result-overlay" id="result-overlay">
       <div class="result-card">
+        <button class="result-close" onclick="Renderer.hideResult()" title="Close and review">✕</button>
         <div class="result-stars" id="result-stars"></div>
         <h2 class="result-title" id="result-title">Challenge Complete!</h2>
         <p class="result-subtitle" id="result-subtitle">Great work!</p>
@@ -90,6 +91,7 @@
           <button class="btn btn-secondary" id="result-retry" onclick="window.AIQuest.retryChallenge()">Try Again</button>
           <button class="btn btn-primary" id="result-next" onclick="window.AIQuest.nextChallenge()">Next Challenge →</button>
         </div>
+        <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: var(--space-md);">You can close this to review your answers</p>
       </div>
     </div>
 

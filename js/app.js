@@ -132,6 +132,34 @@
 
       const msg = messages[stars] || messages[1];
       Renderer.showResult(stars, Math.max(xpDelta, 0), msg.title, msg.subtitle);
+
+      // Inject a "Next Challenge" button into the page action bar
+      this._injectNextButton();
+    },
+
+    // --- Inject "Next Challenge" button into the action bar ---
+    _injectNextButton() {
+      const challengeView = document.getElementById('view-challenge');
+      if (!challengeView) return;
+
+      // Remove any previously injected bar
+      const existing = document.getElementById('injected-next-bar');
+      if (existing) existing.remove();
+
+      const bar = document.createElement('div');
+      bar.id = 'injected-next-bar';
+      bar.className = 'action-bar';
+      bar.style.marginTop = 'var(--space-lg)';
+      bar.innerHTML = `
+        <div class="action-bar-left">
+          <span style="color: var(--accent-green); font-weight: 600;">✓ Challenge Complete</span>
+        </div>
+        <div class="action-bar-right">
+          <button class="btn btn-secondary" onclick="window.AIQuest.retryChallenge()">🔄 Retry</button>
+          <button class="btn btn-primary btn-lg" onclick="window.AIQuest.nextChallenge()">Next Challenge →</button>
+        </div>
+      `;
+      challengeView.appendChild(bar);
     },
 
     // --- Retry current challenge ---
